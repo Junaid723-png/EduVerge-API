@@ -1,5 +1,8 @@
 import Express from "express";
 import User from "../models/user.model.js";
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { environment } from "../environment.js";
 
 export const userController = Express.Router();
 
@@ -32,7 +35,8 @@ userController.get("/:id", async (req, res) => {
 // POST create new user
 userController.post("/", async (req, res) => {
     try {
-        const { username, email, passwordHash, userType, profilePicture } = req.body;
+        const { username, email, password, userType, profilePicture } = req.body;
+        const passwordHash = await bcrypt.hash(password,10);
 
         if (!username || !email || !passwordHash || !userType) {
             return res.status(400).json({ error: "Missing required fields" });
@@ -92,5 +96,38 @@ userController.delete("/:id", async (req, res) => {
         return res.status(200).json({ message: "User deleted successfully" });
     } catch (error) {
         return res.status(500).json({ error: error.message });
+    }
+});
+
+// login existing user(s)
+userController.post("/login", async (req, res) => {
+    try {
+        const { email, password} = req.body;
+        const user = await User.findOne({
+            where:{
+                email: email
+            }
+        })
+        if (!user){
+            return res.json({
+                error: 'Invalid credentials'
+            })
+        }
+        const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+        if (!isValidPassword) return res.json({ error: 'Invalid credentials'});
+        
+        const token = await jwt.sign({
+            id: user.id,
+            username: user.username,
+            userType: user.userType,
+            profilePicture: user.profilePicture,
+            passwordHash: user.passwordHash,
+            email: user.email
+        },environment.JWTSecretkey,{
+            'expiresIn':'12h'
+        })
+        res.status(200).json({message: 'Login Successful', token})
+    }catch(err){
+        console.log(err);
     }
 });
