@@ -57,7 +57,7 @@ studyGroupController.get("/:id", async (req, res) => {
 studyGroupController.post("/create", async (req, res) => {
     try {
         const { groupName, description, difficulty, createdBy, maxMembers, isPublic, courseId } = req.body;
-        if (!groupName || !createdBy) {
+        if (!groupName || !description || !createdBy || !courseId) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
@@ -77,14 +77,13 @@ studyGroupController.post("/create", async (req, res) => {
             description,
             difficulty,
             createdBy,
-            courseId: courseId,            
+            courseId,            
             tags: "",
             maxMembers: maxMembers || 50,
             isPublic: isPublic !== undefined ? isPublic : true,
             createdAt: new Date()
         });
-        console.log(studyGroup);
-        // return res.status(201).json({ studyGroup });
+        return res.status(201).json({ studyGroup });
     } catch (error) {
         return res.status(500).json({ error: error.message });
     }
