@@ -47,6 +47,7 @@ userController.post("/", async (req, res) => {
             username,
             email,
             passwordHash,
+            tags: "",
             userType,
             profilePicture,
             createdAt: new Date()
@@ -126,7 +127,8 @@ userController.post("/login", async (req, res) => {
         },environment.JWTSecretkey,{
             'expiresIn':'12h'
         })
-        user.update({ lastLogin: new Date.now() })
+        const todaysDate = new Date();
+        user.update({ lastLogin: todaysDate });
         res.status(200).json({message: 'Login Successful', token})
     }catch(err){
         console.log(err);

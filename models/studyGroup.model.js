@@ -1,6 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../sequelize.js';
-
+// id, groupName, description, courseId, createdBy, createdAt, tags, difficulty, maxMembers, isPublic` 
 const StudyGroup = sequelize.define('StudyGroup', {
   id: {
     type: DataTypes.STRING,
@@ -17,9 +17,9 @@ const StudyGroup = sequelize.define('StudyGroup', {
   },
   courseId: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
     references: {
-      model: 'Course',
+      model: 'Courses',
       key: 'id'
     }
   },
@@ -35,6 +35,14 @@ const StudyGroup = sequelize.define('StudyGroup', {
     type: DataTypes.DATE,
     allowNull: false,
     defaultValue: DataTypes.NOW,
+  },
+  tags:{
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  difficulty:{
+    type: DataTypes.STRING,
+    allowNull: false,
   },
   maxMembers: {
     type: DataTypes.INTEGER,

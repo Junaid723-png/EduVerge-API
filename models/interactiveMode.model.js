@@ -11,12 +11,12 @@ const InteractiveMode = sequelize.define('InteractiveMode', {
     type: DataTypes.STRING,
     allowNull: false,
     references: {
-      model: 'Course',
+      model: 'Courses',
       key: 'id'
     }
   },
   fileType: {
-    type: DataTypes.ENUM('video', 'document', 'interactive', 'quiz'),
+    type: DataTypes.ENUM('html','py','css','ts','js'),
     allowNull: false,
   },
   fileName: {
