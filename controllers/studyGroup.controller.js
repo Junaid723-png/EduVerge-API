@@ -14,7 +14,29 @@ studyGroupController.get("/", async (req, res) => {
         return res.status(500).json({ error: error.message });
     }
 });
-
+studyGroupController.get("/user/:userId", async (req,res)=>{
+   const { userId } = req.params;
+   try {
+    //get all study group person is involved in
+       await StudyGroupMember.findAll({
+           where: { userId }
+       })
+       .then(async members => {
+           let userStudyGroups = [];
+           //get all information within each study group
+            const processing = await members.map(m => {
+                userStudyGroups.push(StudyGroup.findByPk(m["dataValues"].studyGroupId));
+            })
+            console.log(userStudyGroups);
+            return res.status(200).json(userStudyGroups);
+       })
+       .catch((e)=>{
+            console.log(e);
+       });
+   } catch (error) {
+       return res.status(500).json({ error: error.message });
+   }
+});
 // GET study group by ID
 studyGroupController.get("/:id", async (req, res) => {
     try {
@@ -48,16 +70,6 @@ studyGroupController.post("/create", async (req, res) => {
                 });
             }
         }
-
-        console.log("Creating study group with data:", {
-            groupName,
-            description,
-            difficulty,
-            createdBy,
-            courseId,
-            maxMembers,
-            isPublic
-        });
 
         const studyGroup = await StudyGroup.create({
             id: `sg_${Date.now()}`,
