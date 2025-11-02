@@ -126,6 +126,7 @@ userController.post("/login", async (req, res) => {
         },environment.JWTSecretkey,{
             'expiresIn':'12h'
         })
+        user.update({ lastLogin: new Date.now() })
         res.status(200).json({message: 'Login Successful', token})
     }catch(err){
         console.log(err);
