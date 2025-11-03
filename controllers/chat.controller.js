@@ -29,6 +29,30 @@ chatController.get("/:id", async (req, res) => {
     }
 });
 
+chatController.get("/group/:studyGroupId", async (req, res) => {
+    const { studyGroupId } = req.params;
+    try {
+        const chatsForGroup = await Chat.findAll({
+            where: { studyGroupId },
+            order: [['createdAt', 'DESC']]
+        });
+        const userStudyGroupChats = [];
+                
+        for (const chat of chatsForGroup) {
+            const studyGroupChat = await Chat.findByPk(chat.id);
+            if (studyGroupChat) {
+                userStudyGroupChats.push(studyGroupChat.dataValues);
+            }
+        }
+        
+        return res.status(200).json(userStudyGroupChats);
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: error.message });
+    }
+});
+
 // POST create new chat message
 chatController.post("/", async (req, res) => {
     try {
@@ -47,7 +71,6 @@ chatController.post("/", async (req, res) => {
             fileUrl,
             sentAt: new Date()
         });
-
         return res.status(201).json(chatMessage);
     } catch (error) {
         return res.status(500).json({ error: error.message });

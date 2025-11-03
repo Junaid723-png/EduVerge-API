@@ -2,6 +2,7 @@ import Express from "express";
 import StudyGroup from "../models/studyGroup.model.js";
 import Course from "../models/course.model.js";
 import StudyGroupMember from "../models/studyGroupMember.model.js";
+import { Op } from 'sequelize';
 
 export const studyGroupController = Express.Router();
 
@@ -14,29 +15,63 @@ studyGroupController.get("/", async (req, res) => {
         return res.status(500).json({ error: error.message });
     }
 });
-studyGroupController.get("/user/:userId", async (req,res)=>{
-   const { userId } = req.params;
-   try {
-    //get all study group person is involved in
-       await StudyGroupMember.findAll({
-           where: { userId }
-       })
-       .then(async members => {
-           let userStudyGroups = [];
-           //get all information within each study group
-            const processing = await members.map(m => {
-                userStudyGroups.push(StudyGroup.findByPk(m["dataValues"].studyGroupId));
-            })
-            console.log(userStudyGroups);
-            return res.status(200).json(userStudyGroups);
-       })
-       .catch((e)=>{
-            console.log(e);
-       });
-   } catch (error) {
-       return res.status(500).json({ error: error.message });
-   }
+
+studyGroupController.get('/search-by-query/:query', async (req, res) => {
+    try {
+        const { query } = req.params;
+        
+        if (!query || query.trim() === '') {
+            return res.status(400).json({ error: 'Query parameter is required' });
+        }
+
+        const searchQuery = `%${query.trim()}%`;
+        
+        const studyGroups = await StudyGroup.findAll({
+            where: {
+                [Op.or]: [
+                    { groupName: { [Op.like]: searchQuery } },
+                    { description: { [Op.like]: searchQuery } },
+                    { courseId: { [Op.like]: searchQuery } },
+                    { tags: { [Op.like]: searchQuery } }
+                ]
+            },
+            order: [['createdAt', 'DESC']]
+        });
+
+        return res.status(200).json({
+            message: 'Search completed successfully',
+            results: studyGroups,
+            count: studyGroups.length
+        });
+
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
 });
+
+studyGroupController.get("/user/:userId", async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const members = await StudyGroupMember.findAll({
+            where: { userId }
+        });
+
+        const userStudyGroups = [];
+        
+        for (const member of members) {
+            const studyGroup = await StudyGroup.findByPk(member.studyGroupId);
+            if (studyGroup) {
+                userStudyGroups.push(studyGroup.dataValues);
+            }
+        }
+        return res.status(200).json(userStudyGroups);
+
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: error.message });
+    }
+});
+
 // GET study group by ID
 studyGroupController.get("/:id", async (req, res) => {
     try {
@@ -83,6 +118,13 @@ studyGroupController.post("/create", async (req, res) => {
             isPublic: isPublic !== undefined ? isPublic : true,
             createdAt: new Date()
         });
+        await StudyGroupMember.create({
+            studyGroupId: studyGroup["dataValues"].id,
+            userId: createdBy,
+            joinedAt: new Date(),
+            role: 'moderator'
+        })
+
         return res.status(201).json({ studyGroup });
     } catch (error) {
         return res.status(500).json({ error: error.message });
@@ -131,7 +173,7 @@ studyGroupController.delete("/:id", async (req, res) => {
 });
 
 // POST join study group
-studyGroupController.post("/:id/join", async (req, res) => {
+studyGroupController.post("/join/:id", async (req, res) => {
     try {
         const { id } = req.params;
         const { userId } = req.body;
