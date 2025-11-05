@@ -3,6 +3,8 @@ import StudyGroup from "../models/studyGroup.model.js";
 import Course from "../models/course.model.js";
 import StudyGroupMember from "../models/studyGroupMember.model.js";
 import { Op } from 'sequelize';
+import UserProgress from "../models/userProgress.model.js";
+import SystemGoal from "../models/systemGoal.model.js";
 
 export const studyGroupController = Express.Router();
 
@@ -118,12 +120,29 @@ studyGroupController.post("/create", async (req, res) => {
             isPublic: isPublic !== undefined ? isPublic : true,
             createdAt: new Date()
         });
+
         await StudyGroupMember.create({
             studyGroupId: studyGroup["dataValues"].id,
             userId: createdBy,
             joinedAt: new Date(),
             role: 'moderator'
         })
+        // const systemGoal = await SystemGoal.findAll({
+        //     where: {
+        //         [Op.or]: [
+        //             { title: { [Op.like]: 'Create Your First Study Group' } }
+        //         ]
+        //     }
+        // })
+
+        // await UserProgress.create({
+        //     id: ``,
+        //     userId: createdBy,
+        //     goalId: systemGoal[0].dataValues,
+        //     goalType: `system`,
+        //     currentValue: 100,
+        //     updatedAt: new Date()
+        // })
 
         return res.status(201).json({ studyGroup });
     } catch (error) {

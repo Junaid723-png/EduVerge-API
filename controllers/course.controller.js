@@ -29,7 +29,7 @@ courseController.get("/:id", async (req, res) => {
         await interactiveModeElements.map(async el => {
             await TextElement.findAll({
                 where: { interactiveModeId: el["dataValues"].id },
-                attributes: ['time', 'context', 'run']
+                attributes: ['id','time', 'context', 'run']
             }).then(async text => {
                 main.push({
                     id: el["dataValues"].id,
@@ -139,7 +139,7 @@ courseController.post("/create", async (req, res) => {
     }).catch((err)=>{
         console.log(err);
     });
-
+    
     return res.status(200).json({
         message: "Course Created Successfully",
         main,
@@ -149,8 +149,37 @@ courseController.post("/create", async (req, res) => {
     })
 });
 
-courseController.put("/:id", async (req, res) => {
-    // Update course
+courseController.put("/update", async (req, res) => {
+    const { main, audio, courseDetails} = req.body;
+    let interactiveModeId = '';
+
+    for(const m of main){
+        if (m.id) interactiveModeId = m.id;
+    }
+
+    for (const m of main) {
+        for (const t of m.text) {
+            await TextElement.findByPk(t.id).then(async textElement=>{
+                if (textElement) {
+                    await textElement.update({
+                        context: t.context,
+                        time: t.time,
+                        run: t.run ,
+                        updateAt: new Date()
+                    });
+                } else {
+                    await TextElement.create({
+                        id: `te_${Date.now()}`,
+                        interactiveModeId,
+                        time: t.time,
+                        context: t.context,
+                        run: t.run
+                    })
+                }
+            })
+        }
+    }  
+    return res.status(200).json({status: 'success',message: "Changes saved successfully"})
 });
 
 courseController.delete("/:id", async (req, res) => {
