@@ -192,11 +192,9 @@ studyGroupController.delete("/:id", async (req, res) => {
 });
 
 // POST join study group
-studyGroupController.post("/join/:id", async (req, res) => {
+studyGroupController.post("/join/:id/:userId", async (req, res) => {
     try {
-        const { id } = req.params;
-        const { userId } = req.body;
-
+        const { id, userId } = req.params;
         if (!userId) {
             return res.status(400).json({ error: "User ID is required" });
         }
@@ -208,8 +206,9 @@ studyGroupController.post("/join/:id", async (req, res) => {
             role: 'member'
         });
 
-        return res.status(201).json(member);
+        return res.status(200).json(member);
     } catch (error) {
+        console.log(error);
         return res.status(500).json({ error: error.message });
     }
 });

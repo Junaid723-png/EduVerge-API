@@ -60,7 +60,6 @@ courseController.get("/:id", async (req, res) => {
     }
 });
 
-// Additional routes would go here...
 courseController.get("/", async (req, res) => {
     try {
         const Courses = await Course.findAll();
